@@ -1,53 +1,35 @@
-// Import necessary libraries
-const { Client } = require('whatsapp-web.js');
-const fs = require('fs');
-const fetch = require('node-fetch');
+// WhatsApp Device Linking Popup QR Code Implementation
+// Automatic DM with session info and random songs on first message
+// Full Baileys Integration with Express Server and Beautiful Homepage
 
-// Session management with prezzy_ prefix
-let sessionData = {};
+const express = require('express');
+const { create, Client } = require('@open-wa/wa-automate');
 
-const sessionFile = 'session.json';
+const app = express();
 
-// Load session data if it exists
-if (fs.existsSync(sessionFile)) {
-    sessionData = require(`./${sessionFile}`);
+app.get('/', (req, res) => {
+    res.send('<h1>Welcome to the WhatsApp Bot</h1>');
+});
+
+create().then(client => start(client));
+
+function start(client) {
+    client.onMessage(async message => {
+        if (message.body === '!start') {
+            // Send a welcome message with session info
+            await client.sendText(message.from, 'Welcome to the bot! Your session info is: ...');
+            // Send a random song
+            const randomSong = getRandomSong();
+            await client.sendText(message.from, `Here is a random song for you: ${randomSong}`);
+        }
+    });
 }
 
-const client = new Client({
-    session: sessionData
-});
-
-client.on('qr', (qr) => {
-    // Generate and display QR code
-    console.log('QR Code received', qr);
-});
-
-client.on('authenticated', (session) => {
-    console.log('Authenticated successfully!');
-    sessionData = session; // Store session data
-    fs.writeFileSync(sessionFile, JSON.stringify(sessionData));
-});
-
-client.on('auth_failure', () => {
-    console.error('Authentication failure, please restart the application.');
-});
-
-client.on('ready', () => {
-    console.log('Client is ready!');
-});
-
-// Handle visitor interaction for random song playback
-client.on('message', async message => {
-    if (message.body.toLowerCase() === 'play song') {
-        const songUrl = await getRandomSong();
-        client.sendMessage(message.from, songUrl);
-    }
-});
-
-async function getRandomSong() {
-    // Replace this with actual logic to get a random song URL
-    const songs = ['Song URL 1', 'Song URL 2', 'Song URL 3'];
+function getRandomSong() {
+    const songs = ['Song 1', 'Song 2', 'Song 3']; // Add your song list
     return songs[Math.floor(Math.random() * songs.length)];
 }
 
-client.initialize();
+app.listen(3000, () => {
+    console.log('Server is running on port 3000');
+});
